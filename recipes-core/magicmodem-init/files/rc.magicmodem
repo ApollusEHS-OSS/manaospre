@@ -1,0 +1,97 @@
+#!/bin/sh
+
+echo "Running rc.magicmodem..."
+
+# Using Bell202 (similar to V.23) modulation / demodulation
+BPS=1200
+
+echo "This is the Magic Modem" | \
+    /usr/bin/minimodem -t -f /tmp/magicmodem.wav ${BPS}
+/usr/bin/minimodem -r -f /tmp/magicmodem.wav ${BPS} 2>&1 | \
+    /usr/bin/tac | /usr/bin/tac > /dev/kmsg
+
+# TODO: port this to the recipes-core/initscripts way of doing things
+INTERNAL_ADDRESS="192.168.20.1/24"
+
+# check for VM env, rename interfaces
+dmesg | grep -q "VBOXBIOS"
+rc=$?
+if [ $rc -eq 0 ] ; then
+    ip link set eth1 name enp1s0
+    ip link set eth2 name enp2s0
+    ip link set eth3 name enp3s0
+    ip link set eth0 name wlan0
+    # probably behind a hardware MM, use a different block
+    # consider probing if this needs to be done instead
+    INTERNAL_ADDRESS="192.168.21.1/24"
+else
+    ip link set eth0 name enp1s0
+    ip link set eth1 name enp2s0
+    ip link set eth2 name enp3s0
+fi
+
+# setup the (internal) bridge:
+brctl addbr br0
+brctl addif br0 enp2s0 enp3s0 wlan0
+
+# activate the interfaces
+ip link set up dev lo
+ip link set up dev enp2s0
+ip link set up dev enp3s0
+ip link set up dev wlan0
+iw wlan0 set power_save off
+ip link set up dev br0
+
+ip link set up dev ifb0
+
+# setup the bridge / internal side
+ip addr add ${INTERNAL_ADDRESS} dev br0
+
+# setup the WAN side
+# TODO: use the newer autoconf udhcpc
+udhcpc -i enp1s0 -p /run/udhcpc.pid
+
+# might be dangerous based on dhcp response
+tc qdisc add dev enp1s0 ingress
+tc filter add dev enp1s0 parent ffff: protocol ip u32 \
+    match u32 0 0 flowid 1:1 action mirred egress redirect dev ifb0
+
+# set up NAT
+sysctl -w net.ipv4.conf.all.forwarding=1
+iptables -t nat -A POSTROUTING -o enp1s0 -jMASQUERADE
+
+# TODO: generate conf / start hostapd from rc.d
+# Bring up the 802.11:
+python2 /apps/magicmodem/hostapconfgenerator.py > /tmp/hostapd.conf
+chmod a+w /tmp/hostapd.conf
+hostapd -B -P /run/hostapd.pid /tmp/hostapd.conf
+
+# start the magicmodem items
+echo "Starting the WebUI"
+# TODO: handle failures
+# TODO: run as dae except uwsgi
+cp /apps/magicmodem-data/shaping.db /tmp/
+cd /apps/magicmodem
+python3 updaterouting.py  | sh
+
+/apps/magicmodem/zeroshaping.sh
+python3 calibrate.py > /tmp/lastcalibration.json
+# TODO: cull this, not using dae user
+#chown dae /tmp/lastcalibration.json /tmp/shaping.db
+
+# TODO: do this with supervise
+INTERNAL_IP="${INTERNAL_ADDRESS%%/*}"
+uwsgi --plugins-dir /usr/lib/uwsgi/plugins \
+    --plugin syslog --plugin python35 --plugin http \
+    --chdir /apps/magicmodem/webui/ \
+    --http 127.0.0.1:9090 --http ${INTERNAL_IP}:9090 \
+    --wsgi-file /apps/magicmodem/webui/main.py --manage-script-name \
+    --mount /=main:app --pidfile /var/run/uwsgi.pid \
+    --log-syslog 2>&1 | cat >> /dev/null &
+
+# TODO: add a less privileged user to run this as
+    #--uid 1000
+
+# TODO: Tie this to LCDproc instead
+/bin/sleep 2
+python3 /apps/magicmodem/display.py 2>&1 >> /dev/null &

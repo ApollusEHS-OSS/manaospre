@@ -1,0 +1,77 @@
+<html>
+<head>
+<title>MagicModem</title>
+
+<link rel="stylesheet" type="text/css" href="/i/base.css" />
+<link rel="stylesheet" type="text/css" href="/i/flags32a.css" />
+<link rel="stylesheet" type="text/css" href="/i/font-awesome.css" />
+
+<script language="javascript" src="/i/Chart.min.js"></script>
+<script language="javascript" src="/i/search.js"></script>
+
+</head>
+<body onload="init()">
+<div style="width:100%; height:64px;">   <!-- top container -->
+    <div style="width:500px; float:left;">
+        <img src="/i/mmlogo.png" style="display:block; float:left; padding-right:10px;">
+        <h1 style="margin-bottom:10; display:block; padding:0px; margin:0px;">Magic Modem</h1>
+    </div>
+    <div style="position:relative; height:100%; width:200px; float:right;">
+        <div style="position:absolute; vertical-align:middle; top:35%;">
+            <button title="High" style="width:40px; margin:0;" onclick="setCurrentShaping(64512)">
+                <i class="fa fa-signal" style="font-size:2em;"></i>
+            </button>
+            <button title="Medium" style="width:40px;" onclick="setCurrentShaping(64513)">
+                <i class="fa fa-signal" style="font-size:2em; opacity:0.6;"></i>
+            </button>
+            <button title="Low" style="width:40px;" onclick="setCurrentShaping(64514)">
+                <i class="fa fa-signal" style="font-size:2em; opacity:0.3;"></i>
+            </button>
+        </div>
+    </div>
+</div> <!-- top container -->
+<div style="height:100%; padding-top:10px; min-width:1200px; clear:both;">   <!-- content container -->
+    <div style="background-color:#282828; float:left; width:250px; padding:5px;">
+        <span>Favorite ISPs</span>
+        <div style="width:100%;">
+        <ul id="isplist" style="padding:0px; padding-top:10px; padding-left:10px; margin:0px; list-style-type:none;">
+        </ul>
+    </div>
+    <div class="sidespacer"></div>
+    <div style="background-color:#282828;">  <!-- currently active -->
+        <span>Current Settings</span>
+        <pre id="shapedisplay" style="height:2.5em; overflow: hidden; text-overflow: ellipsis;"></pre>
+    </div>
+    <div class="sidespacer"></div>
+    <div style="background-color:#282828;">
+        <span>Calibration <button onclick="recalibrate()">Recalibrate...</button></span>
+        <br>
+        <span id="calibrationdisplay" style="height:3em; font-family:monospace;"></span>
+    </div>
+    <div class="sidespacer"></div>
+    <div style="background-color:#282828;">
+        <span>AP Settings <button onclick="saveAPConfig();">Save...</button></span>
+        <br>
+        <span id="apconfig" style="height:3em; font-family:monospace;">
+            RegDomain: <input id="apregdomain" type="text" value="US" minlength="2" maxlength="2" size="2" disabled="true" readonly="true" style="background-color:#a5a5a5;"><br>
+            Name: <input id="apname" type="text" value="MagicModem-12345678" minlength="1" size="25"><br>
+            Pass: <input id="appass" type="text" value="12345678" minlength="8" maxlength="64" size="25"><br>
+            Channel: <input id="apchannel" type="number" value="5" min="1" max="12" size="2"><br>
+        </span>
+    </div>
+    <div class="sidespacer"></div>
+    <div style="width:230px; height:277px; display:block;">
+        <canvas id="timeOfDayChart" width="400" height="400"></canvas>
+    </div>
+</div>
+<div style="padding-left:15px; float:left; width:840px;">  <!-- right container -->
+<div style="padding:20px; margin-bottom:10px; background-color:#282828; width:800px;">
+    <input id="searchtag" type="text" placeholder="Start typing..." class="searchbox" onInput="sendSearch()" />
+</div>
+<div id="resulttag" style="font-size: 18px; " />
+</div> <!-- right container -->
+
+</div> <!-- content container -->
+
+</body>
+</html>

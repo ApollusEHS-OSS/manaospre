@@ -1,0 +1,13 @@
+#!/bin/sh
+
+case "$1" in
+    start)
+		/etc/init.d/rc.magicmodem
+        ;;
+    *)
+		# TODO: write this
+        echo "can't stop the signal, Mal"
+        ;;
+esac
+
+exit 0
