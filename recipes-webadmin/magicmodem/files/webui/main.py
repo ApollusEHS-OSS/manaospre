@@ -49,16 +49,16 @@ def get_structured_search_result(query, params, asDict=False):
     for row in c.fetchall():
         shape = {
             "aws": {
-                "loss": row[4],
-                "delay": row[5]
+                "delay": row[4],
+                "loss": row[5],
             },
             "akam": {
-                "loss": row[6],
-                "delay": row[7]
+                "delay": row[6],
+                "loss": row[7],
             },
             "oc": {
-                "loss": row[8],
-                "delay": row[9]
+                "delay": row[8],
+                "loss": row[9],
             },
             "bandwidth": row[10]
         }
@@ -145,7 +145,8 @@ def send_shape_commands(lastCalibration, asn_data):
 
     for shortcode in ["aws", "akam", "oc"]:
         latency = shape[shortcode]["delay"]
-        latency -= lastCalibration[shortcode]
+        # disallow negative latencies
+        latency = max(latency - lastCalibration[shortcode], 0)
         # TODO: calibration
         cmd = "sudo tc qdisc replace dev ifb0 parent %s handle %s: netem delay %dms loss %s%% %s" % (
                 NETWORK_CONFIG[shortcode]["classid"],

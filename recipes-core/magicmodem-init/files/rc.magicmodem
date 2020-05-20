@@ -12,11 +12,13 @@ echo "This is the Magic Modem" | \
 
 # TODO: port this to the recipes-core/initscripts way of doing things
 INTERNAL_ADDRESS="192.168.20.1/24"
+BRIDGE_INTERFACES="enp2s0"
 
 # check for VM env, rename interfaces
 dmesg | grep -q "VBOXBIOS"
 rc=$?
 if [ $rc -eq 0 ] ; then
+    # VBox case
     ip link set eth1 name enp1s0
     ip link set eth2 name enp2s0
     ip link set eth3 name enp3s0
@@ -28,17 +30,19 @@ else
     ip link set eth0 name enp1s0
     ip link set eth1 name enp2s0
     ip link set eth2 name enp3s0
+    BRIDGE_INTERFACES="${BRIDGE_INTERFACES} enp3s0 wlan0"
 fi
 
 # setup the (internal) bridge:
 brctl addbr br0
-brctl addif br0 enp2s0 enp3s0 wlan0
+brctl addif br0 ${BRIDGE_INTERFACES}
 
 # activate the interfaces
 ip link set up dev lo
 ip link set up dev enp2s0
 ip link set up dev enp3s0
 ip link set up dev wlan0
+# TODO: probe for wlan0 before doing this
 iw wlan0 set power_save off
 ip link set up dev br0
 
@@ -60,6 +64,7 @@ tc filter add dev enp1s0 parent ffff: protocol ip u32 \
 sysctl -w net.ipv4.conf.all.forwarding=1
 iptables -t nat -A POSTROUTING -o enp1s0 -jMASQUERADE
 
+# TODO: probe for wlan0 before doing this
 # TODO: generate conf / start hostapd from rc.d
 # Bring up the 802.11:
 python2 /apps/magicmodem/hostapconfgenerator.py > /tmp/hostapd.conf

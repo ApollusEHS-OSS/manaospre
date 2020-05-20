@@ -5,7 +5,7 @@ building hosting services."
 HOMEPAGE = "https://uwsgi-docs.readthedocs.io/en/latest/"
 
 SECTION = "net"
-DEPENDS += "expat pcre python zlib"
+DEPENDS += "expat pcre python zlib util-linux"
 
 inherit pythonnative python3native setuptools3
 

@@ -1,4 +1,4 @@
-# manaos preview release
+# [manaos](http://www.manaos.org) preview release
 Welcome to the meta-manaos yocto layer, powering the magicmodem!
 
 This is currently a prerelease alpha.  While this code
@@ -19,7 +19,7 @@ Building is roughly:
 mkdir mm && cd mm
 git clone -b thud git://git.yoctoproject.org/poky.git
 cd poky
-git clone THISREPO
+git clone THISREPO meta-manaos
 echo 'TEMPLATECONF=${TEMPLATECONF:-meta-manaos/conf}' > .templateconf
 
 # Yocto help: https://www.yoctoproject.org/docs/2.6/brief-yoctoprojectqs/brief-yoctoprojectqs.html
@@ -35,7 +35,9 @@ cd meta-openembedded && git checkout thud && cd ..
 source oe-init-build-env
 # customize to taste, then
 bitbake core-image-minimal
-# if it works...
+
+# after a successful build:
+../meta-manaos/scripts/buildfirmwareupdater.py
 ../meta-manaos/scripts/glueimg.py
 ```
 
@@ -78,6 +80,8 @@ work around some boot issues, follow these steps:
   tachometer icon will instantly shape your connection the median UTC midnight
   experience of that ISP (practical teleportation).  Time traveling is
   planned for later.
+
+[Instructions for VirtualBox builds are here](http://www.manaos.org/article).
 
 NB - All routes are not currently shaped, mainly access to AWS and OpenConnect.
 There isn't an interface to adjust this yet.

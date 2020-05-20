@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Busybox version: 1.29.2
-# Wed Feb 27 10:10:03 2019
+# Mon Nov 18 17:27:49 2019
 #
 CONFIG_HAVE_DOT_CONFIG=y
 
@@ -48,7 +48,7 @@ CONFIG_STATIC=y
 # CONFIG_FEATURE_SHARED_BUSYBOX is not set
 CONFIG_CROSS_COMPILER_PREFIX=""
 CONFIG_SYSROOT=""
-CONFIG_EXTRA_CFLAGS=" -O2 -pipe -g -feliminate-unused-debug-types   -m32 -march=i586 -fstack-protector-strong  -D_FORTIFY_SOURCE=2 "
+CONFIG_EXTRA_CFLAGS=""
 CONFIG_EXTRA_LDFLAGS=""
 CONFIG_EXTRA_LDLIBS=""
 # CONFIG_USE_PORTABLE_CODE is not set

@@ -142,7 +142,7 @@ def do_gluing(firmware_full_path, yocto_rootfs_full_path):
     print("do_gluing: done")
 
 
-def do_grub_and_kernel_install(firmware_full_path, kernel_full_path):
+def do_grub_and_kernel_install(firmware_full_path, kernel_full_path, initramfs_full_path):
     cmd = [
         TOOLS["losetup"] + " --show -Pf %s",
         TOOLS["mount"] + " %sp1 %s/",
@@ -185,9 +185,12 @@ menuentry "ManaOS (VGA)" {
 }"""
         f.write(grub_config)
 
-    # copy the kernel into the fs
+    # copy the kernel / initramfs into the fs
     shutil.copy(kernel_full_path, os.path.join(mount_point, "boot"),
         follow_symlinks=True)
+    shutil.copy(initramfs_full_path, os.path.join(mount_point, "boot"),
+        follow_symlinks=True)
+
 
     # unmount the device
     system_should_succeed(cmd[3] % mount_point)
@@ -203,22 +206,26 @@ def print_hints(firmware_full_path):
     #qemu-system-x86_64 -snapshot -hda %s -boot c -serial mon:vc -serial null
     hints = """\n\n%s is ready, can test/write with:
     VBoxManage convertfromraw --format vdi %s ~/manaos.vdi
-    sudo dd if=%s of=/dev/sdX bs=4M status=progress
+    sudo dd if=%s of=/dev/sdX bs=4M conv=fdatasync status=progress
     """ % (firmware_full_path,
         firmware_full_path, firmware_full_path)
     print(hints)
 
 
-def do_glue_image(firmware_full_path, yocto_full_path, kernel_full_path):
+def do_glue_image(firmware_full_path, yocto_full_path,
+                    kernel_full_path, initramfs_full_path):
     if os.geteuid() != 0:
         print("This script requires root privileges for" \
                 " loopback, mounting, and fsck, exiting")
         exit(1)
 
     sanity_check(firmware_full_path)
+    if os.path.isfile(initramfs_full_path) == False:
+        raise Exception("initramfs file not found [%s]" % initramfs_full_path)
 
     do_gluing(firmware_full_path, yocto_full_path)
-    do_grub_and_kernel_install(firmware_full_path, kernel_full_path)
+    do_grub_and_kernel_install(firmware_full_path, kernel_full_path,
+        initramfs_full_path)
 
     print_hints(firmware_full_path)
 
@@ -233,11 +240,16 @@ if __name__ == "__main__":
             deploy_dir_image, "core-image-minimal-qemux86-64.ext4")
         kernel_full_path = os.path.join(
             deploy_dir_image, "bzImage")
-        os.execvp("sudo", ["python3", __file__, yocto_full_path, kernel_full_path])
-    elif len(sys.argv) == 3:
+        work_dir = get_bitbake_var("WORKDIR")
+        initramfs_full_path = os.path.join(work_dir,
+            "../../../firmwareupdater/initramfs.igz")
+        os.execvp("sudo",
+            ["python3", __file__, yocto_full_path, kernel_full_path,
+            initramfs_full_path])
+    elif len(sys.argv) == 4:
         # second execution in sudo context
-        _, yocto_full_path, kernel_full_path = sys.argv
-        do_glue_image(FIRMWARE_FILE_FULL_PATH, yocto_full_path, kernel_full_path)
+        _, yocto_full_path, kernel_full_path, initramfs_full_path = sys.argv
+        do_glue_image(FIRMWARE_FILE_FULL_PATH, yocto_full_path, kernel_full_path, initramfs_full_path)
     else:
         print("Usage:\n  %s\nor\n  %s yocto_full_path kernel_full_path" % (
             __file__, __file__))

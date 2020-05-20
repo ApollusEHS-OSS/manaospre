@@ -200,6 +200,10 @@ function saveAPConfig() {
 }
 
 function renderChart(shapeResultsObj) {
+    if (typeof shapeResultsObj !== "object" || ("shape" in shapeResultsObj === false)) {
+        console.log("renderChart: invalid shapeResultsObj");
+        return;
+    }
     var srKeys = Object.keys(shapeResultsObj["shape"]);
     var shapeData = srKeys.map(function (k) {
         /* TODO: some error checking here */

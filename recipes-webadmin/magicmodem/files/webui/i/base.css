@@ -41,3 +41,7 @@ button.shapebtn {
     vertical-align:middle;
 }
 
+a:link, a:visited {
+    color: red;
+    font-weight: bold;
+}
